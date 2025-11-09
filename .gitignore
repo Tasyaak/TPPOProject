@@ -3,6 +3,11 @@
 __pycache__/
 *.pyc
 
+# db
+db/*.db
+db/*.sqlite
+db/*.sqlite3
+
 # IDE
 .idea/
 *.iml
