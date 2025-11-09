@@ -7,7 +7,7 @@ def project_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 def default_config_path() -> Path:
-    return project_root() / "configs" / "default.yaml"
+    return project_root() / "default.yaml"
 
 def get_config(path: str | Path | None = None) -> dict:
     """Загружает YAML-конфиг и возвращает dict."""
