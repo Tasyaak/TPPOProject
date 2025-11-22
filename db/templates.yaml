@@ -1,6 +1,6 @@
-- recommendation_template_id : "1"
+- recommendation_template_id : 1
   patterns:
-    - name: "1"
+    - name: 1
       source: |
         #include <iostream>
 
@@ -16,7 +16,7 @@
         IDENT: ["b", "c", "s", "k", "value", "res", "total", "counter"]
         NUM: ["1", "2", "10", "100"]
 
-    - name: "2"
+    - name: 2
       source: |
         #include <iostream>
 
@@ -32,7 +32,7 @@
         NUM: ["1", "2", "10", "42"]
 
 
-- recommendation_template_id: "2"
+- recommendation_template_id: 2
   patterns:
       source: |
         int main() {

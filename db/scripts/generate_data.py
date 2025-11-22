@@ -1,5 +1,6 @@
 import random, subprocess, sqlite3, re, yaml
 from pathlib import Path
+import hashlib
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -34,13 +35,11 @@ def compile_and_get_errors(source_code : str) -> str:
         cwd=str(BUILD_DIR)
     )
     res = proc.stdout.strip()
-    print(f"res1 = {res}")
     end_str = res.find('\n', 9) 
     if end_str != -1:
         res = res[res.find("error ")+6 : end_str]
     else:
         res = res[res.find("error ")+6 :]
-    print(f"res2 = {res}", end="\n\n")
     return res
 
 
@@ -59,12 +58,28 @@ def generate_source_from_pattern(pattern : str, placeholders : dict[str, list[in
     return code
 
 
-def find_entry_yaml(config, template_id: int | str):
-    template_id = str(template_id)
+def find_entry_yaml(config, template_id : int):
     for item in config:
-        if str(item.get("recommendation_template_id")) == template_id:
+        if item.get("recommendation_template_id") == template_id:
             return item
     return None
+
+
+def insert_sample(conn : sqlite3.Connection, label_id : int, source_code : str, error_text : str) -> bool:
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "INSERT INTO training_data (label, source_code, error_text) VALUES (?, ?, ?)",
+            (label_id, source_code, error_text)
+        )
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    
+
+def code_hash(s: str) -> str:
+    return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
 
 def fill_db(recommendation_template_id : int, target_per_template : int = 200) -> None:
@@ -89,21 +104,26 @@ def fill_db(recommendation_template_id : int, target_per_template : int = 200) -
         "SELECT COUNT(*) FROM training_data WHERE label = ?", (recommendation_template_id,))
     count, = cur.fetchone()
 
+    seen_hashes = []
     while count < target_per_template:
         pattern = random.choice(patterns)
         source_template = pattern["source"]
         placeholders = pattern.get("placeholders", {})
         source_code = generate_source_from_pattern(source_template, placeholders)
+
+        h = code_hash(source_code)
+        if h in seen_hashes:
+            continue
+        seen_hashes.append(h)
+
         error_text = compile_and_get_errors(source_code)
 
         if has_target_error(error_text, error_code):
-            cur.execute(
-                "INSERT INTO training_data (label, source_code, error_text) VALUES (?, ?, ?)",
-                (label_id, source_code, error_text)
-            )
-            conn.commit()
-            count += 1
-            print(f"added sample {count}/{target_per_template}")
+            if insert_sample(conn, label_id, source_code, error_text):
+                count += 1
+                print(f"added sample {count}/{target_per_template}")
+            else:
+                print("duplicate source, regenerating")
         else:
             print(f"skip: no {error_code} in output")
     conn.close()

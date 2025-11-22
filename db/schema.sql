@@ -9,7 +9,8 @@ create table error_codes (
 create table recommendation_templates (
     recommendation_template_id integer primary key,
     error_code_id integer references error_codes(error_code_id),
-    template text not null
+    template text not null,
+    unique(error_code_id, template)
 );
 
 create table training_data (
