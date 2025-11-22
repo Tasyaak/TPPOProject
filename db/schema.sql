@@ -1,17 +1,22 @@
 PRAGMA journal_mode = WAL;
 PRAGMA foreign_keys = ON;
 
+create table error_codes (
+    error_code_id integer primary key,
+    error_code text not null
+);
+
 create table recommendation_templates (
     recommendation_template_id integer primary key,
-    errorType text not null,
+    error_code_id integer references error_codes(error_code_id),
     template text not null
 );
 
 create table training_data (
-    training_data integer primary key,
-    label integer references recommendation_template(recommendation_template_id),
-    sourceCode text not null,
-    errorText text not null
+    training_data_id integer primary key,
+    label integer references recommendation_templates(recommendation_template_id),
+    source_code text not null,
+    error_text text not null
 );
 
 create table classification_models (

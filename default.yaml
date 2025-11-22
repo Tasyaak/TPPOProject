@@ -3,12 +3,11 @@ seed: 42
 data:
   db_path: "db/app.db"
   sql_train: |
-    SELECT id, text, label
-    FROM train_table
-    WHERE label IN (0,1)
-  id_col: "id"
-  text_col: "text"
-  label_col: "label"
+    SELECT source_code, error_text, label
+    FROM training_data
+  source_code: "source_code"
+  error_text: "error_text"
+  label: "label"
 
 features:
   # Вариант 1: TF-IDF (офлайн fit, быстрее на инференсе)

@@ -1,0 +1,45 @@
+- recommendation_template_id : "1"
+  patterns:
+    - name: "1"
+      source: |
+        #include <iostream>
+
+        int main() {
+            <TYPE> a = <INIT>;
+            <IDENT> = a + <NUM>;
+            std::cout << <IDENT> << std::endl;
+            return 0;
+        }
+      placeholders:
+        TYPE: ["int", "long", "double", "float"]
+        INIT: ["0", "1", "42"]
+        IDENT: ["b", "c", "s", "k", "value", "res", "total", "counter"]
+        NUM: ["1", "2", "10", "100"]
+
+    - name: "2"
+      source: |
+        #include <iostream>
+
+        int main()
+        {
+            int x = <NUM>;
+            int y = <FUNC_NAME>(x);
+            std::cout << y << std::endl;
+            return 0;
+        }
+      placeholders:
+        FUNC_NAME: ["func", "ff", "f", "g"]
+        NUM: ["1", "2", "10", "42"]
+
+
+- recommendation_template_id: "2"
+  patterns:
+      source: |
+        int main() {
+            double x = 0.5;
+            double y = sin(x);
+            return 0;
+        }
+      placeholders:
+        # Здесь можно ничего не писать, но для единообразия:
+        DUMMY: ["dummy"]
