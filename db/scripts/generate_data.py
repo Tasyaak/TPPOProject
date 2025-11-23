@@ -58,9 +58,9 @@ def generate_source_from_pattern(pattern : str, placeholders : dict[str, list[in
     return code
 
 
-def find_entry_yaml(config, template_id : int):
+def find_entry_yaml(config : list[dict], template : str) -> dict | None:
     for item in config:
-        if item.get("recommendation_template_id") == template_id:
+        if item.get("template") == template:
             return item
     return None
 
@@ -70,32 +70,39 @@ def insert_sample(conn : sqlite3.Connection, label_id : int, source_code : str, 
     try:
         cur.execute(
             "INSERT INTO training_data (label, source_code, error_text) VALUES (?, ?, ?)",
-            (label_id, source_code, error_text)
-        )
+            (label_id, source_code, error_text))
         conn.commit()
         return True
     except sqlite3.IntegrityError:
         return False
     
 
-def code_hash(s: str) -> str:
+def code_hash(s : str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
 
-def fill_db(recommendation_template_id : int, target_per_template : int = 200) -> None:
+def fill_db(template : str, target_per_template : int = 200) -> None:
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
     config = yaml.safe_load(YAML_PATH.read_text(encoding="utf-8"))
-    entry = find_entry_yaml(config, recommendation_template_id)
+    entry = find_entry_yaml(config, template)
     patterns = entry["patterns"]
+
+    cur.execute(
+        """
+        SELECT recommendation_template_id
+        FROM recommendation_templates
+        WHERE template = ?
+        """, (template,))
+    recommendation_template_id, = cur.fetchone()
 
     cur.execute(
         """
         SELECT error_code_id, error_code
         FROM error_codes
         WHERE error_code_id = (SELECT error_code_id 
-                                FROM recommendation_templates r
+                                FROM recommendation_templates
                                 WHERE recommendation_template_id = ?)
         """, (recommendation_template_id,))
     label_id, error_code = cur.fetchone()
@@ -130,9 +137,11 @@ def fill_db(recommendation_template_id : int, target_per_template : int = 200) -
 
 
 def main():
-    print("recommendation_template_id, count = ", end="")
-    recommendation_template_id, count = map(int, input().split())
-    fill_db(recommendation_template_id, count)
+    print("template = ", end="")
+    template = input()
+    print("count = ", end="")
+    count = int(input())
+    fill_db(template, count)
 
 
 if __name__ == "__main__":

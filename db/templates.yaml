@@ -1,45 +1,79 @@
-- recommendation_template_id : 1
+- template: "Объявите переменную <IDENT_1> перед использованием"
   patterns:
     - name: 1
       source: |
         #include <iostream>
+        using namespace std;
 
-        int main() {
+        int main()
+        {
             <TYPE> a = <INIT>;
             <IDENT> = a + <NUM>;
-            std::cout << <IDENT> << std::endl;
-            return 0;
+            cout << <IDENT> << endl;
         }
       placeholders:
-        TYPE: ["int", "long", "double", "float"]
-        INIT: ["0", "1", "42"]
-        IDENT: ["b", "c", "s", "k", "value", "res", "total", "counter"]
-        NUM: ["1", "2", "10", "100"]
+        TYPE: ["int", "short", "long long", "double", "float", "unsigned int", "unsigned short"]
+        INIT: ["0", "1", "42", "0.0", "2.5", "5.6", "3.14", "2.71", "1.618"]
+        IDENT: ["b", "c", "s", "k", "value", "res", "total", "count"]
+        NUM: ["1", "2", "10", "100", "35.9", "1.5", "4.0"]
 
     - name: 2
       source: |
         #include <iostream>
+        using namespace std;
+
+        int main()
+        {
+            string s = "<INIT>";
+            <IDENT> = s + "<STR>";
+            int size = <IDENT>.size()
+            cout << size << "\n";
+        }
+      placeholders:
+        INIT: ["red", "green", "blue", "orange", "yellow", "", "Hello,"]
+        IDENT: ["a", "b", "c", "s1", "val", "res", "str", "ss"]
+        STR: [" something", " brown", " cyan", " purple", " World!", " WOW"]
+
+
+- template: "Подключите заголовок <INDENT_1> \"#include <<INDENT_1>>\""
+  patterns:
+    - name: 1
+      source: |
+        #include <iostream>
+        #include <vector>
+        using namespace std;
+
+        struct st
+        {
+            int a1;
+        };
+
+        int main()
+        {
+            vector<queue<<TYPE_1>>> v(4);
+            <TYPE_2> val = <INIT>;
+            a.push_back(queue<<TYPE_1>>());
+            cout << val << "\n";
+        }
+      placeholders:
+        TYPE_1: ["string", "int", "double", "float", "char"]
+        TYPE_2: ["int", "long long", "double", "float"]
+        INIT: ["1", "-0.5", "11", "2.5"]
+
+
+- template: "Объявите функцию <IDENT_1> перед использованием"
+  patterns:
+    - name: 1
+      source: |
+        #include <iostream>
+        using namespace std;
 
         int main()
         {
             int x = <NUM>;
             int y = <FUNC_NAME>(x);
-            std::cout << y << std::endl;
-            return 0;
+            cout << y << endl;
         }
       placeholders:
         FUNC_NAME: ["func", "ff", "f", "g"]
         NUM: ["1", "2", "10", "42"]
-
-
-- recommendation_template_id: 2
-  patterns:
-      source: |
-        int main() {
-            double x = 0.5;
-            double y = sin(x);
-            return 0;
-        }
-      placeholders:
-        # Здесь можно ничего не писать, но для единообразия:
-        DUMMY: ["dummy"]
