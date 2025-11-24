@@ -7,7 +7,9 @@ __pycache__/
 db/*.db
 db/*.sqlite
 db/*.sqlite3
-db/build_tmp
+
+# compile
+compile/build_tmp
 
 # IDE
 .idea/

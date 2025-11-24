@@ -1,46 +1,12 @@
-import random, subprocess, sqlite3, re, yaml
+import random, sqlite3, re, yaml
 from pathlib import Path
 import hashlib
+from compile import compile_get_error_text
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DB_PATH = BASE_DIR / "app.db"
 YAML_PATH = BASE_DIR / "templates.yaml"
-BUILD_DIR = BASE_DIR / "build_tmp"   # временная папка для tmp.cpp и .obj/.pch
-
-
-def compile_and_get_errors(source_code : str) -> str:
-    BUILD_DIR.mkdir(parents=True, exist_ok=True)
-    cpp_path = BUILD_DIR / "tmp.cpp"
-    cpp_path.write_text(source_code, encoding="utf-8")
-
-    cmd = [
-        "cl",
-        "/nologo",
-        "/c",
-        "/EHsc",
-        "/Zi",
-        "/Od",
-        "/MDd",
-        "/std:c++14",
-        str(cpp_path)
-    ]
-
-    proc = subprocess.run(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        encoding="utf-8",
-        cwd=str(BUILD_DIR)
-    )
-    res = proc.stdout.strip()
-    end_str = res.find('\n', 9) 
-    if end_str != -1:
-        res = res[res.find("error ")+6 : end_str]
-    else:
-        res = res[res.find("error ")+6 :]
-    return res
 
 
 def has_target_error(error_text : str, error_code : str) -> bool:
@@ -48,7 +14,7 @@ def has_target_error(error_text : str, error_code : str) -> bool:
     return re.search(pattern, error_text) is not None
 
 
-def generate_source_from_pattern(pattern : str, placeholders : dict[str, list[int]]) -> str:
+def generate_source_from_pattern(pattern : str, placeholders : dict[str, list[str]]) -> str:
     code = pattern
     for name, values in placeholders.items():
         token = f"<{name}>"
@@ -81,7 +47,7 @@ def code_hash(s : str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
 
-def fill_db(template : str, target_per_template : int = 200) -> None:
+def fill_db(template : str, target_count : int = 200) -> None:
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
@@ -99,20 +65,20 @@ def fill_db(template : str, target_per_template : int = 200) -> None:
 
     cur.execute(
         """
-        SELECT error_code_id, error_code
+        SELECT error_code
         FROM error_codes
         WHERE error_code_id = (SELECT error_code_id 
                                 FROM recommendation_templates
                                 WHERE recommendation_template_id = ?)
         """, (recommendation_template_id,))
-    label_id, error_code = cur.fetchone()
+    error_code, = cur.fetchone()
 
     cur.execute(
         "SELECT COUNT(*) FROM training_data WHERE label = ?", (recommendation_template_id,))
     count, = cur.fetchone()
 
     seen_hashes = []
-    while count < target_per_template:
+    while count < target_count:
         pattern = random.choice(patterns)
         source_template = pattern["source"]
         placeholders = pattern.get("placeholders", {})
@@ -123,12 +89,12 @@ def fill_db(template : str, target_per_template : int = 200) -> None:
             continue
         seen_hashes.append(h)
 
-        error_text = compile_and_get_errors(source_code)
+        error_text = compile_get_error_text(source_code)
 
         if has_target_error(error_text, error_code):
-            if insert_sample(conn, label_id, source_code, error_text):
+            if insert_sample(conn, recommendation_template_id, source_code, error_text):
                 count += 1
-                print(f"added sample {count}/{target_per_template}")
+                print(f"added sample {count}/{target_count}")
             else:
                 print("duplicate source, regenerating")
         else:
@@ -139,9 +105,9 @@ def fill_db(template : str, target_per_template : int = 200) -> None:
 def main():
     print("template = ", end="")
     template = input()
-    print("count = ", end="")
-    count = int(input())
-    fill_db(template, count)
+    print("target_count = ", end="")
+    target_count = int(input())
+    fill_db(template, target_count)
 
 
 if __name__ == "__main__":

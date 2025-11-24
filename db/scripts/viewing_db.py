@@ -5,8 +5,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 DB_PATH = ROOT / "app.db"
 
 
-def print_table(conn : sqlite3.Connection, table: str):
-    conn = sqlite3.connect(DB_PATH)
+def print_table(conn : sqlite3.Connection, table: str) -> None:
     cursor = conn.cursor()
 
     cursor.execute(f"PRAGMA table_info({table})")
