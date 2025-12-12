@@ -1,15 +1,13 @@
-import random, sqlite3, re, yaml
-from pathlib import Path
-import hashlib
-from compile import compile_get_error_text
+import random, sqlite3, re, yaml, hashlib
+from sqlite3 import Connection
+from processing_cpp import compile_get_error_info
+from config import DB_PATH, TEMPLATES_YAML_PATH
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-DB_PATH = BASE_DIR / "app.db"
-YAML_PATH = BASE_DIR / "templates.yaml"
-
-
-def has_target_error(error_text : str, error_code : str) -> bool:
+def has_target_error(error_text : str | None, error_code : str) -> bool:
+    if error_text is None:
+        return False
+    
     pattern = rf"\b{re.escape(error_code)}\b"
     return re.search(pattern, error_text) is not None
 
@@ -24,14 +22,14 @@ def generate_source_from_pattern(pattern : str, placeholders : dict[str, list[st
     return code
 
 
-def find_entry_yaml(config : list[dict], template : str) -> dict | None:
+def find_entry_yaml(config : list[dict], template : str) -> dict:
     for item in config:
         if item.get("template") == template:
             return item
-    return None
+    return {}
 
 
-def insert_sample(conn : sqlite3.Connection, label_id : int, source_code : str, error_text : str) -> bool:
+def insert_sample(conn : Connection, label_id : int, source_code : str, error_text : str) -> bool:
     cur = conn.cursor()
     try:
         cur.execute(
@@ -51,7 +49,7 @@ def fill_db(template : str, target_count : int = 200) -> None:
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
-    config = yaml.safe_load(YAML_PATH.read_text(encoding="utf-8"))
+    config = yaml.safe_load(TEMPLATES_YAML_PATH.read_text(encoding="utf-8"))
     entry = find_entry_yaml(config, template)
     patterns = entry["patterns"]
 
@@ -89,20 +87,20 @@ def fill_db(template : str, target_count : int = 200) -> None:
             continue
         seen_hashes.append(h)
 
-        error_text = compile_get_error_text(source_code)
+        error_text, error_line = compile_get_error_info(source_code)
 
         if has_target_error(error_text, error_code):
-            if insert_sample(conn, recommendation_template_id, source_code, error_text):
+            if insert_sample(conn, recommendation_template_id, source_code, error_text):    # type: ignore
                 count += 1
                 print(f"added sample {count}/{target_count}")
             else:
                 print("duplicate source, regenerating")
         else:
-            print(f"skip: no {error_code} in output")
+            print(f"skip: no {error_code} in output, error: {error_text}")
     conn.close()
 
 
-def main():
+def main() -> None:
     print("template = ", end="")
     template = input()
     print("target_count = ", end="")

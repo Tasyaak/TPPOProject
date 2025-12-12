@@ -1,9 +1,7 @@
-from .normalize_data import normalize_error_text
-from .config import get_config, project_root
+from .normalize_data import normalize_error_text, normalize_source_code
 
 
 __all__ = [
-    "get_config",
-    "project_root",
-    "normalize_error_text"
+    "normalize_error_text",
+    "normalize_source_code",
 ]

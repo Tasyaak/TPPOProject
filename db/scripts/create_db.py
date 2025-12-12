@@ -1,14 +1,12 @@
-import sqlite3, pathlib
+import sqlite3
+from config import DB_PATH, SCHEMA_SQL_PATH, SEED_SQL_PATH
 
-
-ROOT = pathlib.Path(__file__).resolve().parents[1]
-DB_PATH = ROOT / "app.db"
-SCHEMA = (ROOT / "schema.sql").read_text(encoding="utf-8")
-SEED = (ROOT / "seed.sql").read_text(encoding="utf-8")
 
 DB_PATH.unlink(missing_ok=True)
 with sqlite3.connect(DB_PATH) as conn:
-    conn.executescript(SCHEMA)
-    conn.executescript(SEED)
+    with open(SCHEMA_SQL_PATH, encoding="utf-8") as f:
+        conn.executescript(f.read())
+    with open(SEED_SQL_PATH, encoding="utf-8") as f:
+        conn.executescript(f.read())
 
-print(f"Created {DB_PATH}")
+print(f"Database created {DB_PATH}")

@@ -1,0 +1,175 @@
+data:
+  sql_train: |
+    SELECT source_code, error_text, label
+    FROM training_data
+  source_code: "source_code"
+  error_text: "error_text"
+  label: "label"
+
+
+features:
+  lowercase: false
+  naive_bayes_compatible: false
+
+  for_source_code:
+    vectorizer: "tfidf"
+    ngram_range: [1, 4]
+    tokenizer: "identity"
+    preprocessor: "identity"
+    token_pattern: null
+  
+    TfidfVectorizer:
+      smooth_idf: true
+      sublinear_tf: true # использовать логарифмическую зависимость для TF
+      max_df: 1.0 # не отсекать
+      min_df: 1   # не отсекать
+    
+    CountVectorizer:
+      max_df: 1.0 # не отсекать
+      min_df: 1   # не отсекать
+    
+    HashingVectorizer:
+      n_features: 1048576
+      # alternate_sign: true # нужно переключить в false, если использовать naive_bayes_compatible = true
+  
+  for_error_text:
+    vectorizer: "tfidf"
+    ngram_range: [1, 5]
+    preprocessor: "normalize_error_text"
+    tokenizer: "error_tokenizer"
+    token_pattern: null
+
+    TfidfVectorizer:
+      smooth_idf: true
+      sublinear_tf: true # использовать логарифмическую зависимость для TF
+      max_df: 1.0 # не отсекать
+      min_df: 1   # не отсекать
+    
+    CountVectorizer:
+      max_df: 1.0 # не отсекать
+      min_df: 1   # не отсекать
+    
+    HashingVectorizer:
+      n_features: 1048576
+      alternate_sign: true
+
+
+cross_val_score:
+  scoring: ["accuracy", "f1"]
+  strategies:
+    - name: "stratified"
+      type: "StratifiedKFold"
+      n_splits: 5
+      shuffle: true
+      random_state: 42
+    - name: "plain"
+      type: "KFold"
+      n_splits: 5
+      shuffle: true
+      random_state: 42
+  n_jobs: -1
+
+
+report:
+  save_models_table: false
+  metrics:
+    - "accuracy"
+    - "f1"
+    - "roc_auc"
+
+
+active_models:
+  - "log_regression"
+  - "support_vector_machine"
+  - "knn"
+  - "random_forest"
+
+
+models:
+  log_regression:
+    type: "sklearn.linear_model.LogisticRegression"
+    params:
+      class_weight: "balanced"
+      n_jobs: -1
+    grid:
+      - num: 1
+        C: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
+        solver: ["lbfgs"]
+        penalty: ["l2"]
+        max_iter: [100, 200, 500, 1000, 10000]
+      - num: 2
+        C: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
+        solver: ["liblinear"]
+        penalty: ["l2", "l1"]
+        max_iter: [100, 200, 500, 1000, 10000]
+      - num: 3
+        C: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
+        solver: ["newton-cg"]
+        penalty: ["l2"]
+      - num: 4
+        C: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
+        solver: ["newton-cholesky"]
+        penalty: ["l2"]
+        max_iter: [100, 200, 500, 1000, 10000]
+      - num: 5
+        C: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
+        solver: ["sag"]
+        penalty: ["l2"]
+        max_iter: [5000, 10000]
+      - num: 6
+        C: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
+        solver: ["saga"]
+        penalty: ["elasticnet"]
+        max_iter: [5000, 10000]
+        l1_ratio: [0.1, 0.2, 0.5, 0.9]
+      - num: 7
+        C: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
+        solver: ["saga"]
+        penalty: ["l1", "l2"]
+        max_iter: [5000, 10000]
+
+  support_vector_machine:
+    type: "sklearn.svm.SVC"
+    params:
+      class_weight: "balanced"
+    grid:
+      - num: 1
+        C: [0.001, 0.01, 0.1, 1, 10, 100, 1000]
+        kernel: ["linear"]
+      - num: 2
+        C: [0.001, 0.01, 0.1, 1, 10, 100, 1000]
+        kernel: ["rbf"]
+        gamma: ["scale", "auto", 0.001, 0.01, 0.1, 1, 10]
+      - num: 3
+        C: [0.1, 1, 10, 100]
+        kernel: ["poly"]
+        gamma: ["scale", "auto"]
+        degree: [2, 3, 4]
+        coef0: [0, 1, 2]
+
+  knn:
+    type: "sklearn.neighbors.KNeighborsClassifier"
+    params:
+      metric: "minkowski"
+    grid:
+      - num: 1
+        n_neighbors: [1, 3, 5, 7]
+        weights: ["uniform", "distance"]
+        algorithm: ["auto", "ball_tree", "kd_tree"]
+        p: [1, 2, 3]
+        leaf_size: [10, 20, 30, 40, 50]
+
+  random_forest:
+    type: "sklearn.ensemble.RandomForestClassifier"
+    params:
+      class_weight: "balanced"
+      n_jobs: -1
+    grid:
+      - num: 1
+        n_estimators: [50, 100, 150]
+        max_depth: [null, 5, 10, 15]
+        min_samples_split: [2, 5, 10]
+        min_samples_leaf: [1, 2, 4]
+        max_features: ["sqrt", "log2"]
+        class_weight: ["balanced", null]
+        bootstrap: [true, false]

@@ -6,18 +6,26 @@ create table error_codes (
     error_code text not null
 );
 
-create table recommendation_templates (
-    recommendation_template_id integer primary key,
+create table recommendations (
+    recommendation_id integer primary key,
     error_code_id integer references error_codes(error_code_id),
-    template text not null,
-    unique(error_code_id, template)
+    recommendation text not null,
+    recommendation_code text not null,
+    is_active integer not null default 1,
+    unique(error_code_id, recommendation),
+    unique(error_code_id, recommendation_code)
 );
 
 create table training_data (
     training_data_id integer primary key,
-    label integer references recommendation_templates(recommendation_template_id),
+    label integer references recommendations(recommendation_id),
+    error_text text not null,
+    normalized_error_text text not null,
     source_code text not null,
-    error_text text not null
+    ctx json not null,
+    code_tokens json not null, -- ручная сериализация, потом парсинг
+    code_numeric json not null,
+    is_in_train integer not null default 1
 );
 
 create table classification_models (

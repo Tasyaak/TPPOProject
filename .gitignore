@@ -5,24 +5,26 @@ __pycache__/
 
 # db
 db/*.db
+db/*.db-shm
+db/*.db-wal
 db/*.sqlite
 db/*.sqlite3
 
 # compile
-compile/build_tmp
+processing_cpp/build_tmp
 
 # IDE
 .idea/
 *.iml
 
-# data & models
-data/*
-!data/.gitkeep
+# models
 models/*
-!models/.gitkeep
 
 # notebooks
+notebooks/ctx_jsonls/
 *.ipynb_checkpoints/
 
 # OS
 .DS_Store
+
+temp_output/
