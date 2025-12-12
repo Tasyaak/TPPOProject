@@ -21,7 +21,6 @@ processing_cpp/build_tmp
 models/*
 
 # notebooks
-notebooks/ctx_jsonls/
 *.ipynb_checkpoints/
 
 # OS
