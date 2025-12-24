@@ -20,11 +20,12 @@ create table training_data (
     training_data_id integer primary key,
     label integer references recommendations(recommendation_id),
     error_text text not null,
-    normalized_error_text text not null,
+    error_text_tokens json not null,
+    error_code text not null,
+    error_line integer not null,
     source_code text not null,
-    ctx json not null,
-    code_tokens json not null, -- ручная сериализация, потом парсинг
-    code_numeric json not null,
+    ctx_tokens json null,
+    ctx_numeric json not null,
     is_in_train integer not null default 1
 );
 

@@ -1,18 +1,26 @@
 data:
-  sql_train: |
-    SELECT source_code, error_text, label
+  sql: |
+    SELECT label, error_text_tokens, ctx_tokens, ctx_numeric
     FROM training_data
-  source_code: "source_code"
-  error_text: "error_text"
-  label: "label"
+    WHERE is_in_train = 1
 
 
 features:
   lowercase: false
   naive_bayes_compatible: false
 
-  for_source_code:
-    vectorizer: "tfidf"
+  for_ctx_numeric:
+    mode: "DictVectorizer"
+    scale: "StandardScaler"
+    vectorizers:
+      DictVectorizer:
+        sparse: true
+    scaling:
+      StandardScaler:
+      with_mean: false
+    
+  for_ctx_tokens:
+    mode: "CountVectorizer"
     ngram_range: [1, 4]
     tokenizer: "identity"
     preprocessor: "identity"
@@ -30,13 +38,12 @@ features:
     
     HashingVectorizer:
       n_features: 1048576
-      # alternate_sign: true # нужно переключить в false, если использовать naive_bayes_compatible = true
   
   for_error_text:
-    vectorizer: "tfidf"
+    mode: "CountVectorizer"
     ngram_range: [1, 5]
-    preprocessor: "normalize_error_text"
-    tokenizer: "error_tokenizer"
+    preprocessor: "identity"
+    tokenizer: "identity"
     token_pattern: null
 
     TfidfVectorizer:

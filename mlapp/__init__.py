@@ -1,7 +1,7 @@
-from .normalize_data import normalize_error_text, normalize_source_code
+from .normalize_data import error_tokenizer, build_features_from_ctx
 
 
 __all__ = [
-    "normalize_error_text",
-    "normalize_source_code",
+    "error_tokenizer",
+    "build_features_from_ctx",
 ]

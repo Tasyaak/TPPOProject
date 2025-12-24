@@ -483,7 +483,10 @@ def safe_extract_context(source_code : str, error_line : int, with_macros : bool
 
 def main() -> None:
     source_code = """
-        #include <bits/stdc++.h>
+        #include <iostream>
+        #include <utility>
+        #include <vector>
+        #include "shtoto"
         
         using namespace std;
         #define rep(i,n) for(int i=0; i<(n); i++)
@@ -509,18 +512,18 @@ def main() -> None:
             return 0;
         （
     """
-    error_line = 83
+    error_line = 5
 
     source_code = normalize_includes(source_code)
         
     t0 = time.perf_counter()
-    tu = parse(source_code, False)
+    tu = parse(source_code, True)
     t1 = time.perf_counter()
 
-    idx = build_tu_index(tu, False)
+    idx = build_tu_index(tu, True)
     t2 = time.perf_counter()
 
-    res = extract_error_context(tu, idx, error_line, False, radius=2)
+    res = extract_error_context(tu, idx, error_line, True, radius=2)
     t3 = time.perf_counter()
 
     print("parse:", t1 - t0, "sec")

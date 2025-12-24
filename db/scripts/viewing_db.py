@@ -13,11 +13,15 @@ def format_cell(value : Any, max_width : int = MAX_CELL_WIDTH) -> str:
     return s
 
 
-def print_table(cursor : Cursor, table : str) -> None:
+def print_table(cursor : Cursor, table : str, limit : int = -1) -> None:
     cursor.execute(f"PRAGMA table_info({table})")
     columns = [col[1] for col in cursor.fetchall()]
 
-    cursor.execute(f"SELECT * FROM {table}")
+    if limit == -1:
+        cursor.execute(f"SELECT * FROM {table}")
+    else:
+        cursor.execute(f"SELECT * FROM {table} LIMIT {limit}")
+
     raw_rows = cursor.fetchall()
 
     rows = [
@@ -41,9 +45,10 @@ def print_table(cursor : Cursor, table : str) -> None:
 def main() -> None:
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
-        print_table(cursor, "error_codes")
-        print_table(cursor, "recommendation_templates")
-        print_table(cursor, "training_data")
+        # print_table(cursor, "error_codes")
+        # print_table(cursor, "recommendation_templates")
+        # print_table(cursor, "training_data")
+        print_table(cursor, "temp_table", 1)
 
 
 if __name__ == "__main__":
