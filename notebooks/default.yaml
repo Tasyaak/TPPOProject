@@ -66,7 +66,7 @@ report:
   metrics:
     - "accuracy"
     - "f1_weighted"
-    - "roc_auc"
+    - "roc_auc_ovr_weighted"
 
 
 cross_val_score:
@@ -88,10 +88,10 @@ active_model: "log_regression"
 
 
 training:
-  cv_strategy: "stratified"      # имя из cross_val_score.strategies
+  cv_strategy: "stratified"
   tuning:
-    method: "grid"               # "grid" | "random" | "none"
-    scoring: ["accuracy", "f1_weighted"]
+    method: "grid"               # "grid" | "halving_grid | "random" | "halving_random" | "none"
+    scoring: ["accuracy", "f1_weighted", "roc_auc_ovr_weighted"]
     refit: "f1_weighted"
     n_jobs: -1
     verbose: 1
@@ -103,7 +103,6 @@ models:
     type: "sklearn.linear_model.LogisticRegression"
     params:
       class_weight: "balanced"
-      n_jobs: -1
     grid:
       - solver: ["lbfgs"]
         C: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
@@ -133,6 +132,15 @@ models:
         C: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
         penalty: ["l1", "l2"]
         max_iter: [5000, 10000]
+    halving_grid:
+      factor: 3
+      min_resources: "exhaust"
+      scoring: "f1_weighted"
+    halving_random:
+      factor: 3
+      min_resources: "smallest"
+      scoring: "f1_weighted"
+
 
   support_vector_machine:
     type: "sklearn.svm.SVC"
@@ -149,6 +157,11 @@ models:
         gamma: ["scale", "auto"]
         degree: [2, 3, 4]
         coef0: [0, 1, 2]
+    halving_random:
+      factor: 4
+      min_resources: "smallest"
+      aggressive_elimination: true
+
 
   knn:
     type: "sklearn.neighbors.KNeighborsClassifier"
@@ -161,6 +174,13 @@ models:
         algorithm: ["auto", "ball_tree", "kd_tree"]
         p: [1, 2, 3]
         leaf_size: [10, 20, 30, 40, 50]
+    halving_grid:
+      factor: 4
+      min_resources: "smallest"
+    halving_random:
+      factor: 4
+      min_resources: "smallest"
+
 
   random_forest:
     type: "sklearn.ensemble.RandomForestClassifier"
@@ -176,3 +196,14 @@ models:
         max_features: ["sqrt", "log2"]
         class_weight: ["balanced", null]
         bootstrap: [true, false]
+    halving_grid:
+      factor: 2
+      resource: "clf__n_estimators"
+      min_resources: 30
+      max_resources: 300
+    halving_random:
+      factor: 2
+      resource: "clf__n_estimators"
+      min_resources: 30
+      max_resources: 300
+      n_candidates: 60
