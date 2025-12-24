@@ -17,7 +17,7 @@ features:
         sparse: true
     scaling:
       StandardScaler:
-      with_mean: false
+        with_mean: false
     
   for_ctx_tokens:
     mode: "CountVectorizer"
