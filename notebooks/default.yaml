@@ -65,7 +65,7 @@ report:
   save_models_table: false
   metrics:
     - "accuracy"
-    - "f1"
+    - "f1_weighted"
     - "roc_auc"
 
 
@@ -91,8 +91,8 @@ training:
   cv_strategy: "stratified"      # имя из cross_val_score.strategies
   tuning:
     method: "grid"               # "grid" | "random" | "none"
-    scoring: ["accuracy", "f1"]
-    refit: "f1"
+    scoring: ["accuracy", "f1_weighted"]
+    refit: "f1_weighted"
     n_jobs: -1
     verbose: 1
     error_score: "raise"
