@@ -90,7 +90,7 @@ active_model: "log_regression"
 training:
   cv_strategy: "stratified"
   tuning:
-    method: "grid"               # "grid" | "halving_grid | "random" | "halving_random" | "none"
+    method: "halving_grid"        # "grid" | "halving_grid | "random" | "halving_random" | "none"
     scoring: ["f1_weighted", "accuracy", "roc_auc_ovr_weighted"]
     refit: "f1_weighted"
     n_jobs: -1
@@ -107,7 +107,7 @@ models:
       - solver: ["lbfgs"]
         C: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
         penalty: ["l2"]
-        max_iter: [100, 200, 500, 1000, 10000]
+        max_iter: [100, 200, 500, 1000] # 10000
       # - solver: ["liblinear"]
       #   C: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
       #   penalty: ["l2", "l1"]
