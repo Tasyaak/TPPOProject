@@ -91,7 +91,7 @@ training:
   cv_strategy: "stratified"
   tuning:
     method: "grid"               # "grid" | "halving_grid | "random" | "halving_random" | "none"
-    scoring: ["accuracy", "f1_weighted", "roc_auc_ovr_weighted"]
+    scoring: ["f1_weighted", "accuracy", "roc_auc_ovr_weighted"]
     refit: "f1_weighted"
     n_jobs: -1
     verbose: 1
@@ -112,13 +112,13 @@ models:
         C: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
         penalty: ["l2", "l1"]
         max_iter: [100, 200, 500, 1000, 10000]
-      - solver: ["newton-cg"]
-        C: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
-        penalty: ["l2"]
-      - solver: ["newton-cholesky"]
-        C: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
-        penalty: ["l2"]
-        max_iter: [100, 200, 500, 1000, 10000]
+      # - solver: ["newton-cg"]
+      #   C: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
+      #   penalty: ["l2"]
+      # - solver: ["newton-cholesky"]
+      #   C: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
+      #   penalty: ["l2"]
+      #   max_iter: [100, 200, 500, 1000, 10000]
       - solver: ["sag"]
         C: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
         penalty: ["l2"]
