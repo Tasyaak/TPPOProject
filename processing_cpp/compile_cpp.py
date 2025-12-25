@@ -67,11 +67,11 @@ def compile_get_error_info(source_code : str) -> tuple[str | None, int | None]:
         end_str = len(temp)
 
     res = temp[idx:end_str].strip()
-    if BITS_HEADER_RE_FIND.search(res):
-        code = normalize_includes(source_code)
-        if code == source_code:
-            return (None, None)
-        return compile_get_error_info(code)
+    # if BITS_HEADER_RE_FIND.search(res):
+    #     code = normalize_includes(source_code)
+    #     if code == source_code:
+    #         return (None, None)
+    #     return compile_get_error_info(code)
     return (res, error_line)
 
 
@@ -79,6 +79,84 @@ def clear_build_tmp() -> None:
     for pattern in ("*.cpp", "*.obj", "*.exe"):
         for file in BUILD_DIR.glob(pattern):
             os.remove(file)
+
+
+def strip_cpp_comments(code : str) -> str:
+    code = code.strip()
+    result = []
+    i = 0
+    n = len(code)
+    state = "code"
+
+    while i < n:
+        ch = code[i]
+
+        if state == "code":
+            # начало строкового литерала
+            if ch == '"':
+                state = "string"
+                result.append(ch)
+                i += 1
+                continue
+            # начало символьного литерала
+            if ch == "'":
+                state = "char"
+                result.append(ch)
+                i += 1
+                continue
+            # потенциальное начало комментария
+            if ch == "/" and i + 1 < n:
+                next_ch = code[i + 1]
+                # // однострочный комментарий
+                if next_ch == "/":
+                    state = "line_comment"
+                    i += 2
+                    continue
+                # /* ... */ многострочный комментарий
+                if next_ch == "*":
+                    state = "block_comment"
+                    i += 2
+                    continue
+            # обычный код — просто копируем символ
+            result.append(ch)
+            i += 1
+        elif state == "string":
+            result.append(ch)
+            # экранированный символ внутри строки
+            if ch == "\\" and i + 1 < n:
+                result.append(code[i + 1])
+                i += 2
+                continue
+            # конец строкового литерала
+            if ch == '"':
+                state = "code"
+            i += 1
+        elif state == "char":
+            result.append(ch)
+            # экранированный символ внутри символьного литерала
+            if ch == "\\" and i + 1 < n:
+                result.append(code[i + 1])
+                i += 2
+                continue
+            # конец символьного литерала
+            if ch == "'":
+                state = "code"
+            i += 1
+        elif state == "line_comment":
+            # пропускаем до конца строки
+            if ch == "\n":
+                # перевод строки сохраняем, чтобы структура кода не ломалась
+                result.append(ch)
+                state = "code"
+            i += 1
+        elif state == "block_comment":
+            # ищем закрывающую последовательность */
+            if ch == "*" and i + 1 < n and code[i + 1] == "/":
+                state = "code"
+                i += 2
+            else:
+                i += 1
+    return "".join(result).strip()
 
 
 def normalize_includes(source_code : str) -> str:
