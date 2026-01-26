@@ -407,7 +407,7 @@ def extract_cursor_meta(cur : Cursor | None) -> dict[str, str | int | bool | lis
 
 
 def extract_error_context(tu : TranslationUnit, idx : TUIndex, line : int, with_macros : bool, radius : int = 2) -> dict[str, int | list | dict]:
-    # 1. Локальный AST-узел: без column, только по строке
+    # 1. Локальный AST-узел
     error_cursor = find_smallest_cursor_by_line(idx, line)
     core_info = extract_cursor_core_info(error_cursor)
 
