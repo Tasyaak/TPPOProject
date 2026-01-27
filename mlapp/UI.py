@@ -48,7 +48,7 @@ class CompileErrorAdvisorApp(tk.Tk):
         super().__init__()
 
         bundle = load_sklearn_model_bundle(
-            MODELS_DIR / "sgd_log_regression_2",
+            MODELS_DIR / "sgd_log_regression_1",
             strict_versions=False,
             expected_steps=("feat", "clf"),
         )

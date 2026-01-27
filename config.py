@@ -9,6 +9,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 DB_DIR = PROJECT_ROOT / "db"
 DB_SCRIPTS_DIR = DB_DIR / "scripts"
 DB_PATH = DB_DIR / "app.db"
+DB_SNAPSHOT_PATH = DB_DIR / "app.snapshot.db"
 SCHEMA_SQL_PATH = DB_DIR / "schema.sql"
 SEED_SQL_PATH = DB_DIR / "seed.sql"
 TEMPLATES_YAML_PATH = DB_DIR / "templates.yaml"

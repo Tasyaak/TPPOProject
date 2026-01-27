@@ -126,8 +126,8 @@ def cursor_meta_features(cursor_meta : dict) -> tuple[list[str], dict[str, float
     numeric["N_META__HAS_BINOP_OP"] = 1.0 if op else 0.0
 
     # CALL_EXPR
-    num_args = cursor_meta.get("num_args")
-    if isinstance(num_args, int):
+    num_args = cursor_meta.get("num_args", None)
+    if num_args is not None:
         numeric["N_META__CALL_N_ARGS"] = float(num_args)
 
     arg_types = cursor_meta.get("arg_types") or []
@@ -345,7 +345,8 @@ TOKEN_RE = re.compile(
 )
 
 def error_tokenizer(text : str) -> list[str]:
-    return TOKEN_RE.findall(text)
+    norm_error_text = normalize_error_text(text)
+    return TOKEN_RE.findall(norm_error_text)
 
 
 def test_normalize_error_code() -> None:

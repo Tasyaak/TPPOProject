@@ -86,7 +86,7 @@ cross_val_score:
   n_jobs: -1
 
 
-active_model: "random_forest"
+active_model: "sgd_classifier"
 
 
 training:
@@ -208,7 +208,7 @@ models:
       factor: 4
       min_resources: "smallest"
 
-
+  # 2.25 часа на нулевой итерации
   random_forest:
     type: "sklearn.ensemble.RandomForestClassifier"
     params:
