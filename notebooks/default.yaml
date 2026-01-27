@@ -93,8 +93,8 @@ training:
   cv_strategy: "stratified"
   tuning:
     method: "halving_grid"        # "grid" | "halving_grid | "random" | "halving_random" | "none"
-    scoring: ["f1_weighted", "accuracy", "roc_auc_ovr_weighted"]
-    refit: "f1_weighted"
+    scoring: "f1_weighted"        # ["f1_weighted", "accuracy", "roc_auc_ovr_weighted"]
+    refit: true
     n_jobs: 2
     verbose: 1
     error_score: "raise"
@@ -133,6 +133,7 @@ models:
         penalty: ["l1", "l2"]
         max_iter: [300, 800]
     halving_grid:
+      # доп. параметры
       factor: 3
       min_resources: "exhaust"
       scoring: "f1_weighted"
@@ -162,6 +163,7 @@ models:
         l1_ratio: [0.1, 0.2, 0.5, 0.9]
         max_iter: [800, 1500]
     halving_grid:
+      # доп. параметры
       factor: 3
       min_resources: "exhaust"
       scoring: "f1_weighted"

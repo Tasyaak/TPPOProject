@@ -28,7 +28,7 @@ def _import_obj(path : str):
     return getattr(import_module(mod), name)
 
 
-def make_cv(strategy_cfg : dict):
+def make_cv(strategy_cfg : dict) -> StratifiedKFold | KFold:
     t = strategy_cfg["type"]
     if t == "StratifiedKFold":
         return StratifiedKFold(
