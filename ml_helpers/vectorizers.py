@@ -108,13 +108,13 @@ def build_vectorizer_from_cfg(cfg : dict, *, col_map : dict[str, str] | None = N
     tr = []
 
     tr.append((
-        "source_code",
+        "ctx_tokens",
         build_text_tokens(features["for_ctx_tokens"], lowercase=lowercase, naive_bayes_compatible=nb_ok),
         col_map["for_ctx_tokens"],
     ))
 
     tr.append((
-        "error_text",
+        "error_text_tokens",
         build_text_tokens(features["for_error_text"], lowercase=lowercase, naive_bayes_compatible=nb_ok),
         col_map["for_error_text"],
     ))

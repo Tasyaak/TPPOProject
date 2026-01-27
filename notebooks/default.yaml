@@ -86,7 +86,7 @@ cross_val_score:
   n_jobs: -1
 
 
-active_model: "sgd_classifier"
+active_model: "random_forest"
 
 
 training:
@@ -136,11 +136,9 @@ models:
       # доп. параметры
       factor: 3
       min_resources: "exhaust"
-      scoring: "f1_weighted"
     halving_random:
       factor: 3
       min_resources: "smallest"
-      scoring: "f1_weighted"
 
 
   sgd_classifier:
@@ -166,11 +164,9 @@ models:
       # доп. параметры
       factor: 3
       min_resources: "exhaust"
-      scoring: "f1_weighted"
     halving_random:
       factor: 3
       min_resources: "smallest"
-      scoring: "f1_weighted"
 
 
   support_vector_machine:
@@ -216,25 +212,25 @@ models:
   random_forest:
     type: "sklearn.ensemble.RandomForestClassifier"
     params:
-      class_weight: "balanced"
+      bootstrap: true
       random_state: 42
       n_jobs: 3
     grid:
-      - n_estimators: [50, 100, 150]
-        max_depth: [null, 5, 10, 15]
+      - max_depth: [null, 5, 10, 15]
+        # n_estimators: [50, 100, 150]
         min_samples_split: [2, 5, 10]
         min_samples_leaf: [1, 2, 4]
         max_features: ["sqrt", "log2"]
         class_weight: ["balanced", null]
-        bootstrap: [true, false]
     halving_grid:
-      factor: 2
+      factor: 3
       resource: "clf__n_estimators"
-      min_resources: 30
-      max_resources: 300
+      min_resources: 32
+      max_resources: 256
+      aggressive_elimination: false
     halving_random:
-      factor: 2
+      factor: 3
       resource: "clf__n_estimators"
-      min_resources: 30
-      max_resources: 300
+      min_resources: 32
+      max_resources: 256
       n_candidates: 60
