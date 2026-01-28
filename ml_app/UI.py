@@ -165,7 +165,7 @@ class CompileErrorAdvisorApp(tk.Tk):
         self._worker_thread = None
 
         bundle = load_sklearn_model_bundle(
-            MODELS_DIR / "sgd_log_regression_1",
+            MODELS_DIR / "knn_cosine_1",
             strict_versions=False,
             expected_steps=("feat", "clf"),
         )
