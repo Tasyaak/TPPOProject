@@ -59,14 +59,14 @@ def build_text_tokens(field_cfg : dict, *, lowercase : bool, naive_bayes_compati
     else:
         raise ValueError(f"Unsupported mode: {mode}")
 
-    scaler_name = field_cfg["scaler"]
-    if scaler_name == "MaxAbsScaler":
-        scaler = MaxAbsScaler()
+    scale_name = field_cfg["scale"]
+    if scale_name == "MaxAbsScaler":
+        scale = MaxAbsScaler()
     else:
-        raise ValueError(f"Unsupported scaler: {scaler_name}")
+        raise ValueError(f"Unsupported scaler: {scale_name}")
     
     to_tokens = FunctionTransformer(_tokens_col_to_tokens, validate=False)
-    steps = [("to_tokens", to_tokens), ("vect", vect), ("scale", scaler)]
+    steps = [("to_tokens", to_tokens), ("vect", vect), ("scale", scale)]
     return Pipeline(steps)
 
 

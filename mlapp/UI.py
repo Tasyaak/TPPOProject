@@ -1,6 +1,9 @@
 import traceback, threading, sqlite3, json, tkinter as tk, pandas as pd
-from tkinter import ttk
+from tkinter import ttk, font
 from tkinter.scrolledtext import ScrolledText
+from pygments import lex
+from pygments.lexers import CppLexer
+from pygments.token import Token
 from processing_cpp import compile_get_error_info, strip_cpp_comments, safe_extract_context, clear_build_tmp
 from .normalize_data import build_features_from_ctx, error_tokenizer
 from .import_model import load_sklearn_model_bundle
@@ -35,17 +38,131 @@ def enable_windows_dpi_awareness() -> None:
     except Exception:
         pass
 
+
+def apply_dark_cpp_editor_style(text : tk.Text) -> None:
+    text.configure(
+        wrap="none",
+        undo=True,
+        maxundo=-1,
+        bg="#1e1e1e",
+        fg="#d4d4d4",
+        insertbackground="#d4d4d4",
+        selectbackground="#264f78",
+        selectforeground="#ffffff",
+        borderwidth=0,
+        relief="flat",
+    )
+
     try:
-        # System DPI aware (Vista+)
-        user32 = ctypes.WinDLL("user32", use_last_error=True)
-        user32.SetProcessDPIAware()
-    except Exception:
-        pass
+        text.configure(font=("Cascadia Code", 11))
+    except tk.TclError:
+        fixed = font.nametofont("TkFixedFont")
+        fixed.configure(size=11)
+        text.configure(font=fixed)
+
+    f = font.Font(font=text["font"])
+    tabw = f.measure(" " * 4)
+    text.configure(tabs=(tabw,))
+    text.tag_configure("current_line", background="#252526")
+
+
+CPP_TAGS = (
+    "tok_keyword", "tok_type", "tok_func", "tok_name",
+    "tok_string", "tok_number", "tok_comment",
+    "tok_op", "tok_punct", "tok_preproc", "tok_error",
+)
+
+def _token_to_tag(ttype):
+    if ttype in Token.Comment.Preproc or ttype in Token.Comment.PreprocFile:
+        return "tok_preproc"
+    if ttype in Token.Comment:
+        return "tok_comment"
+    if ttype in Token.Name.Class or ttype in Token.Keyword.Type:
+        return "tok_type"
+    if ttype in Token.Keyword:
+        return "tok_keyword"
+    if ttype in Token.Name.Function:
+        return "tok_func"
+    if ttype in Token.Name:
+        return "tok_name"
+    if ttype in Token.String:
+        return "tok_string"
+    if ttype in Token.Number:
+        return "tok_number"
+    if ttype in Token.Operator:
+        return "tok_op"
+    if ttype in Token.Punctuation:
+        return "tok_punct"
+    if ttype in Token.Error:
+        return "tok_error"
+    return None
+
+
+class CppSyntaxHighlighter:
+    def __init__(self, text: tk.Text, *, debounce_ms: int = 120) -> None:
+        self.text = text
+        self.lexer = CppLexer()
+        self.debounce_ms = debounce_ms
+        self._after_id = None
+
+        text.tag_configure("tok_keyword", foreground="#c586c0")
+        text.tag_configure("tok_type",    foreground="#4090d6")
+        text.tag_configure("tok_func",    foreground="#dcdcaa")
+        text.tag_configure("tok_name",    foreground="#9cdcfe")
+        text.tag_configure("tok_string",  foreground="#ce9178")
+        text.tag_configure("tok_number",  foreground="#b5ce89")
+        text.tag_configure("tok_comment", foreground="#6a9955")
+        text.tag_configure("tok_preproc", foreground="#808080")
+        text.tag_configure("tok_op",      foreground="#d4d4d4")
+        text.tag_configure("tok_punct",   foreground="#d4d4d4")
+        text.tag_configure("tok_error",   foreground="#f44747", underline=True)
+
+        text.bind("<KeyRelease>", self._schedule, add="+")
+        text.bind("<<Paste>>", self._schedule, add="+")
+        text.bind("<<Cut>>", self._schedule, add="+")
+        text.bind("<<Undo>>", self._schedule, add="+")
+        text.bind("<<Redo>>", self._schedule, add="+")
+        text.bind("<ButtonRelease-1>", self._update_current_line, add="+")
+        text.bind("<KeyRelease>", self._update_current_line, add="+")
+
+        self.highlight_now()
+        self._update_current_line()
+
+    def _schedule(self, event=None):
+        if self._after_id is not None:
+            self.text.after_cancel(self._after_id)
+        self._after_id = self.text.after(self.debounce_ms, self.highlight_now)
+
+    def highlight_now(self):
+        self._after_id = None
+        code = self.text.get("1.0", "end-1c")
+
+        for tag in CPP_TAGS:
+            self.text.tag_remove(tag, "1.0", "end")
+
+        pos = 0
+        for ttype, value in lex(code, self.lexer):
+            if not value:
+                continue
+            tag = _token_to_tag(ttype)
+            if tag:
+                start = f"1.0 + {pos} chars"
+                end = f"1.0 + {pos + len(value)} chars"
+                self.text.tag_add(tag, start, end)
+            pos += len(value)
+
+    def _update_current_line(self, event=None):
+        self.text.tag_remove("current_line", "1.0", "end")
+        line = self.text.index("insert").split(".")[0]
+        self.text.tag_add("current_line", f"{line}.0", f"{line}.0 lineend+1c")
 
 
 class CompileErrorAdvisorApp(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
+
+        self._closing = threading.Event()
+        self._worker_thread = None
 
         bundle = load_sklearn_model_bundle(
             MODELS_DIR / "sgd_log_regression_1",
@@ -84,6 +201,8 @@ class CompileErrorAdvisorApp(tk.Tk):
             "1.0",
             "#include <iostream>\n\nint main() {\n    std::cout << \"Hello\" << std::endl;\n    return 0;\n}\n",
         )
+        apply_dark_cpp_editor_style(self.code_text)
+        self.cpp_hl = CppSyntaxHighlighter(self.code_text)
 
         controls = ttk.Frame(root)
         controls.grid(row=2, column=0, sticky="ew")
@@ -106,6 +225,8 @@ class CompileErrorAdvisorApp(tk.Tk):
         self.reco_var = tk.StringVar(value="Нажмите «Получить рекомендацию»")
         self.reco_msg = tk.Message(out_frame, textvariable=self.reco_var, width=850, justify="left")
         self.reco_msg.grid(row=0, column=0, sticky="ew")
+
+        self.protocol("WM_DELETE_WINDOW", self.on_close_clicked)
 
 
     def on_clear_clicked(self) -> None:
@@ -155,19 +276,35 @@ class CompileErrorAdvisorApp(tk.Tk):
         self.status_var.set("Анализирую...")
 
         def worker() -> None:
+            if self._closing.is_set():
+                return
             try:
                 reco = self.get_recommendation(cpp_code)
             except Exception:
                 reco = "Ошибка при анализе:\n" + traceback.format_exc()
-            self.after(0, self._finish_analysis, reco)
 
-        threading.Thread(target=worker, daemon=True).start()
+            if not self._closing.is_set():
+                self.after(0, self._finish_analysis, reco)
+
+        self._worker_thread = threading.Thread(target=worker, daemon=True)
+        self._worker_thread.start()
 
 
     def _finish_analysis(self, recommendation: str) -> None:
         self.reco_var.set(recommendation)
         self.status_var.set("Готово")
         self.check_btn.configure(state="normal")
+
+
+    def on_close_clicked(self) -> None:
+        self._closing.set()
+        try:
+            self.check_btn.configure(state="disabled")
+            self.clear_btn.configure(state="disabled")
+        except Exception:
+            pass
+        clear_build_tmp()
+        self.destroy()
 
 
 if __name__ == "__main__":

@@ -24,7 +24,7 @@ features:
     ngram_range: [1, 3]
     tokenizer: "identity"
     preprocessor: "identity"
-    scaler: "MaxAbsScaler"
+    scale: "MaxAbsScaler"
     token_pattern: null
   
     TfidfVectorizer:
@@ -45,7 +45,7 @@ features:
     ngram_range: [1, 4]
     preprocessor: "identity"
     tokenizer: "identity"
-    scaler: "MaxAbsScaler"
+    scale: "MaxAbsScaler"
     token_pattern: null
 
     TfidfVectorizer:
@@ -86,7 +86,7 @@ cross_val_score:
   n_jobs: -1
 
 
-active_model: "sgd_classifier"
+active_model: "knn"
 
 
 training:
@@ -95,7 +95,7 @@ training:
     method: "halving_grid"        # "grid" | "halving_grid | "random" | "halving_random" | "none"
     scoring: "f1_weighted"        # ["f1_weighted", "accuracy", "roc_auc_ovr_weighted"]
     refit: true
-    n_jobs: 2
+    n_jobs: 3
     verbose: 1
     error_score: "raise"
 
@@ -193,20 +193,20 @@ models:
   knn:
     type: "sklearn.neighbors.KNeighborsClassifier"
     params:
-      metric: "minkowski"
-      n_jobs: 3
+      metric: "cosine"
+      algorithm: "brute"
     grid:
-      - n_neighbors: [1, 3, 5, 7]
+      - n_neighbors: [5, 15, 21, 31, 41, 51]
         weights: ["uniform", "distance"]
-        algorithm: ["auto", "ball_tree", "kd_tree"]
-        p: [1, 2, 3]
-        leaf_size: [10, 20, 30, 40, 50]
     halving_grid:
-      factor: 4
-      min_resources: "smallest"
+      factor: 3
+      resource: "n_samples"
+      min_resources: 5000
+      max_resources: "auto"
+      aggressive_elimination: false
     halving_random:
-      factor: 4
-      min_resources: "smallest"
+      factor: 3
+      min_resources: 5000
 
   # 2.25 часа на нулевой итерации
   random_forest:
